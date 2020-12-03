@@ -2,7 +2,7 @@ import { Adapter, BroadcastOptions } from "socket.io-adapter";
 import { Kafka, KafkaConfig, Producer, Consumer } from "kafkajs";
 import { Namespace } from "socket.io";
 import msgpack from "notepack.io";
-import uid2 from "uid2";
+import { uid } from 'uid';
 import Debug from "debug";
 
 const debug = new Debug("KafkaJsAdapter");
@@ -27,7 +27,7 @@ export class KafkaJsAdapter extends Adapter {
   constructor(nsp: Namespace, opts: KafkaAdapterConfig) {
     super(nsp);
 
-    this.uid = uid2(6);
+    this.uid = uid(6);
     this.opts = Object.assign(
       {
         brokers: "localhost:9092",

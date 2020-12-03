@@ -1,13 +1,13 @@
 {
   "name": "socket.io-kafkajs",
-  "version": "1.0.0",
+  "version": "1.0.5",
   "description": "The kafkajs adapter for socket.io",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "MIT",
   "homepage": "https://github.com/xmanh/socket.io-kafkajs#readme",
   "bugs": {
     "url": "https://github.com/xmanh/socket.io-kafkajs/issues"
@@ -35,9 +35,9 @@
     "debug": "^4.3.1",
     "kafkajs": "^1.15.0",
     "notepack.io": "^2.3.0",
-    "socket.io": "^3.0.3",
+    "socket.io": "^2.3.0",
     "socket.io-adapter": "^2.0.3",
-    "uid2": "^0.0.3"
+    "uid": "^2.0.0"
   },
   "devDependencies": {
     "@types/socket.io": "^2.1.11",
