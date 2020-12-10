@@ -1,11 +1,10 @@
 import { Adapter, BroadcastOptions } from "socket.io-adapter";
 import { Kafka, KafkaConfig, Producer, Consumer } from "kafkajs";
 import { Namespace } from "socket.io";
-import msgpack from "notepack.io";
-import { uid } from 'uid';
-import Debug from "debug";
+import { uid } from "uid";
+import msgpack = require("notepack.io");
 
-const debug = new Debug("KafkaJsAdapter");
+const debug = require("debug")("KafkaJsAdapter");
 
 interface KafkaAdapterConfig extends KafkaConfig {
   topic: string;
@@ -66,14 +65,21 @@ export class KafkaJsAdapter extends Adapter {
     await this.subClient.subscribe({ topic: this.opts.topic });
     await this.subClient.run({
       eachMessage: async ({ topic, partition, message }) => {
-        const msg = message.value;
-        this.handleMsg.call(this, msg);
+        try {
+          const msg = message.value;
+          this.handleMsg.call(this, msg);
+        } catch (err) {
+          console.log(err);
+        }
       },
     });
   }
 
   protected handleMsg(msg: any) {
-    const { uid, packet, opts } = msgpack.decode(msg);
+    const args: any = msgpack.decode(msg);
+    const [uid, packet, opts] = args;
+
+    debug("handleMsg", uid, packet, opts);
 
     if (!(uid && packet && opts)) return debug("invalid params");
     if (this.uid === uid) return debug("ignore same uid");
@@ -85,19 +91,27 @@ export class KafkaJsAdapter extends Adapter {
 
     if (opts.rooms && opts.rooms.length === 1) {
       const room = opts.rooms[0];
-      if (room !== "" && !this.rooms.hasOwnProperty(room)) {
+      if (room !== "" && !this.rooms.has(room)) {
         return debug("ignore unknown room %s", room);
       }
     }
+
+    opts.rooms = new Set(opts.rooms);
+    opts.except = new Set(opts.except);
 
     this.broadcast.call(this, packet, opts);
   }
 
   public broadcast(packet: any, opts: BroadcastOptions) {
     packet.nsp = this.nsp.name;
-    let onlyLocal = opts && opts.flags && opts.flags.local;
+    const onlyLocal = opts && opts.flags && opts.flags.local;
     if (!onlyLocal && this.pubClient) {
-      const msg = msgpack.encode({ uid: this.uid, packet, opts });
+      const rawOpts = {
+        rooms: [...opts.rooms],
+        except: [...new Set(opts.except)],
+        flags: opts.flags,
+      };
+      const msg = msgpack.encode([this.uid, packet, rawOpts]);
       this.pubClient.send({
         topic: this.opts.topic,
         messages: [{ value: Buffer.from(msg) }],
